@@ -115,6 +115,29 @@ struct ContentView: View {
             ])
         ]
 
+        // title, completed?
+        let todoSamples: [String: [(String, Bool)]] = [
+            "Website Redesign": [
+                ("Audit existing pages", true),
+                ("Finalize color palette", false),
+                ("Build component library", false),
+                ("Review with stakeholders", false)
+            ],
+            "Mobile App Launch": [
+                ("Set up CI pipeline", true),
+                ("Fix push notifications", false),
+                ("Submit for App Store review", false)
+            ],
+            "Q3 Budget Review": [
+                ("Collect department numbers", false),
+                ("Draft summary deck", false)
+            ],
+            "Onboarding Docs": [
+                ("Write new-hire checklist", true),
+                ("Publish to internal wiki", true)
+            ]
+        ]
+
         for (index, sample) in samples.enumerated() {
             let project = Project(name: sample.0, status: sample.1, orderIndex: index)
             context.insert(project)
@@ -122,6 +145,15 @@ struct ContentView: View {
                 let message = Message(text: entry.0, timestamp: Date().addingTimeInterval(entry.1))
                 message.project = project
                 context.insert(message)
+            }
+            for (todoIndex, todo) in (todoSamples[sample.0] ?? []).enumerated() {
+                let item = TodoItem(title: todo.0, orderIndex: todoIndex)
+                item.project = project
+                if todo.1 {
+                    item.isCompleted = true
+                    item.completedAt = Date().addingTimeInterval(Double(-todoIndex) * 3600 - 7200)
+                }
+                context.insert(item)
             }
         }
     }

@@ -9,10 +9,16 @@ struct ProjectDetailView: View {
     @FocusState private var composerFocused: Bool
 
     var body: some View {
-        VStack(spacing: 0) {
-            messageList
-            Divider()
-            composer
+        HSplitView {
+            VStack(spacing: 0) {
+                messageList
+                Divider()
+                composer
+            }
+            .frame(minWidth: 360, idealWidth: 520)
+
+            TodoPanel(project: project)
+                .frame(minWidth: 260, idealWidth: 320, maxWidth: 460)
         }
         .navigationTitle(project.name)
         .toolbar {

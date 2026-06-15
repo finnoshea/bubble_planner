@@ -7,7 +7,7 @@ struct PlannerApp: App {
         WindowGroup {
             ContentView()
         }
-        .modelContainer(for: [Project.self, Message.self])
+        .modelContainer(for: [Project.self, Message.self, TodoItem.self])
         .commands {
             SidebarCommands()
         }
