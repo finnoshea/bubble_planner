@@ -11,6 +11,7 @@ struct ProjectSidebar: View {
 
     @State private var showingNewProject = false
     @State private var showingDeleteConfirmation = false
+    @State private var projectToRename: Project?
 
     private var selectedProject: Project? {
         guard let id = selectedProjectID else { return nil }
@@ -28,6 +29,7 @@ struct ProjectSidebar: View {
                     ForEach(projects) { project in
                         ProjectRow(project: project, searchText: searchText)
                             .tag(project.persistentModelID)
+                            .contextMenu { renameButton(project) }
                     }
                     .onDelete(perform: delete)
                 }
@@ -35,6 +37,7 @@ struct ProjectSidebar: View {
                 ForEach(projects) { project in
                     ProjectRow(project: project)
                         .tag(project.persistentModelID)
+                        .contextMenu { renameButton(project) }
                 }
                 .onMove(perform: move)
                 .onDelete(perform: delete)
@@ -83,6 +86,9 @@ struct ProjectSidebar: View {
                 addProject(name: name, status: status)
             }
         }
+        .sheet(item: $projectToRename) { project in
+            RenameProjectSheet(project: project)
+        }
         .confirmationDialog(
             "Delete \u{201C}\(selectedProject?.name ?? "")\u{201D}?",
             isPresented: $showingDeleteConfirmation,
@@ -92,6 +98,15 @@ struct ProjectSidebar: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This permanently removes the project and all of its updates. This can't be undone.")
+        }
+    }
+
+    @ViewBuilder
+    private func renameButton(_ project: Project) -> some View {
+        Button {
+            projectToRename = project
+        } label: {
+            Label("Rename…", systemImage: "pencil")
         }
     }
 
@@ -206,6 +221,50 @@ struct ProjectRow: View {
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .abbreviated
         return formatter.localizedString(for: lastUpdated, relativeTo: Date())
+    }
+}
+
+struct RenameProjectSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let project: Project
+    @State private var name: String
+
+    init(project: Project) {
+        self.project = project
+        _name = State(initialValue: project.name)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            Text("Rename Project")
+                .font(.title2.bold())
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Name").font(.subheadline).foregroundStyle(.secondary)
+                TextField("Project name", text: $name)
+                    .textFieldStyle(.roundedBorder)
+                    .onSubmit(save)
+            }
+
+            HStack {
+                Spacer()
+                Button("Cancel") { dismiss() }
+                    .keyboardShortcut(.cancelAction)
+                Button("Save", action: save)
+                    .keyboardShortcut(.defaultAction)
+                    .buttonStyle(.borderedProminent)
+                    .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+        }
+        .padding(24)
+        .frame(width: 360)
+    }
+
+    private func save() {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        project.name = trimmed
+        dismiss()
     }
 }
 
